@@ -4,17 +4,26 @@
         <meta charset="utf-8" />
         <title></title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        
+        <script src="https://polyfill.io/v3/polyfill.min.js"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.js"></script><!--↑+1 IE 대응 스크립트 promise 사용 -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script> <!--Vue CDN-->
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script> <!--axios CDN-->
+        .<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
         <script src="index.js"></script>
     </head>
     <body>
+        <h1>Day 1</h1>
         <div id="app" >
             <div id="name_box">
                 <input id="person" type="text" v-model="name" v-bind:placeholder="message"/>
                 <input id="copy" type="text" v-bind:value='name'  readonly />
-                <h1>
+                <h2>
                     '<span v-html="name"></span>'
-                </h1>
+                </h2>
             </div>
             
             <div id="fruits_box">
@@ -24,18 +33,63 @@
                 <label for="fruit4"><input type="checkbox" id="fruit4" name="fruit4" v-model="fruits" value="pear" />배</label>
                 <label for="fruit5"><input type="checkbox" id="fruit5" name="fruit5" v-model="fruits" value="melon" />참외</label>
 
-                <h1 v-html='fruits'></h1>
+                <h2 v-html='fruits'></h2>
             </div>
 
             <div id="if_show_box">
-                <input type="number" min="10" max="30" step="5" v-model="age" style="display:block;" />
-                <img src="https://via.placeholder.com/150" alt="150" v-show="age > 28" style="display:block; margin-top:10px;" /> <!--age가 28보다 크면 나타남-->
+                <span style="display:block;"><input type="number" min="10" max="30" step="5" v-model="age"  />  age가 28보다 크면 나타남</span>
+                <img src="https://via.placeholder.com/150" alt="150" v-show="age > 28" style="display:block; margin-top:10px;" /> 
             
-                <input type="text" v-model="region" placeholder="지역" />
-                <h1 v-if="region === '안양'">안양</h1>
+                <input type="text" v-model="region" placeholder="지역을 검색해 보세요" /><span> *hint AY</span>
+                <h2 v-if="region === '안양'">안양</h2>
                 
             </div>
         </div><!-- app -->
+
+        <hr style="margin:50px 0;"/>
+        <h1>Day 2</h1>
+
+        <div id="dataPost">
+            <form v-on:submit.prevent="postData" method="POST" ><!--submit.prevent="함수"는 submit태그가 아니라 form에 주기-->
+                <label for="user_nm">이름 <input type="text" v-model="postDatas.user_nm" id="user_nm" name="user_nm" /></label>
+                <label for="user_id">아이디 <input type="text" v-model="postDatas.user_id" id="user_id" name="user_id" /></label>
+                <label for="user_pw">비밀번호 <input type="password" v-model="postDatas.user_pw" id="user_pw" name="user_pw" /></label>
+                
+                <input type="submit" value="post" />
+            </form>
+        </div>
+
+        <div id="dataGet">            
+            <table>
+                <colgroup>
+                    <col width="3%" />
+                    <col width="3%" />
+                    <col width="3%" />
+                    <col width="18%" />
+                    <col width="*" />
+                </colgroup>
+                <thead >
+                    <tr>
+                        <th>
+                            Index
+                        </th>
+                        <th v-for="(key, i) in getDatas[0]" scope="col">
+                            {{i}}
+                        </th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(get, index) in getDatas"><!-- get은 임의 정의, index는 고유값이며 객체에서 key역할, 객체를 for in 할 때는  (val, key, index) in regions) 식으로-->
+                        <th scope="row">{{index+1}}</th>
+                        <td style="text-align:center;">{{get.userId}}</td>
+                        <td style="text-align:center;">{{get.id}}</td>
+                        <td>{{get.title}}</td>
+                        <td>{{get.body}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
     </body>
 
@@ -51,5 +105,82 @@
                 fruits : []
             }
         });
+
+        var appGetData = new Vue({
+            el:"#dataGet",
+            data:{
+                getDatas:[],
+                errors:[]
+            },
+            created(){
+                this.getData();
+            },
+            methods:{
+                getData(){
+                    axios.get('http://jsonplaceholder.typicode.com/posts')
+                        .then(res => {
+                            this.getDatas = res.data
+                            console.log(res.data);
+                        })
+                        .catch(e => {
+                            this.errors.push(e);
+                        })
+                }
+            }
+        });
+
+        var appPostData = new Vue({
+            el: "#dataPost",
+            data: {
+                postDatas:{
+                    user_nm:'',
+                    user_id:'',
+                    user_pw:''
+                },
+                errors: []
+            },
+            methods:{
+                postData(){
+                    if (this.postDatas.user_nm.length <= 0 || this.postDatas.user_id.length <= 0 || this.postDatas.user_pw.length <= 0) {
+                        alert('내용을 모두 입력해주세요');                        
+                        return;
+                    }else{
+                        var regexPW = /^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{4,12}/;
+                        var regexNM = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/;
+                        if(regexNM.test(this.postDatas.user_nm) == false){
+                            alert('이름은 한글로 작성해주세요');
+                            return ;
+                        }else if(regexPW.test(this.postDatas.user_pw) == false){
+                            alert('비밀번호는 4~12자리 영문, 숫자, 특수문자(!@#$%^*+=-) 조합으로 작성해주세요');
+                            return ;
+                        }
+                        
+                    }
+                    
+                    const formData = new FormData();
+                    formData.append('user_nm', this.postDatas.user_nm);
+                    formData.append('user_id', this.postDatas.user_id);
+                    formData.append('user_pw', this.postDatas.user_pw); //form 데이터 만들기
+
+                    console.log(formData);
+                    console.log(formData.entries()); // for in을 사용한다면 formData가 아닌 formData.entries() 사용
+
+                    axios.post('http://jsonplaceholder.typicode.com/posts', formData,{
+                        headers : {
+                            'Content-Type' : 'multipart/form-data' //파일 전송할 때 필요
+                        }
+                    }).then((res) => {
+                        console.log(res);
+                        location.reload();
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                    })
+                }
+            }
+        });
+
+
+        
     </script>
 </html>
